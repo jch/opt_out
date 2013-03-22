@@ -2,7 +2,6 @@
 require 'opt_out'
 
 STORE = {}  # shared memory store for persistence. Cleared between tests
-
 OptOut.configure do |c|
   c.persistence = {
     :adapter => OptOut::Persistence::MemoryAdapter,
@@ -42,7 +41,7 @@ module OptOut
     end
 
     def setup
-      STORE.clear
+      OptOut.config.adapter.reset
       @instance = Model.new(:id => 'model_1', :email => 'jollyjerry@gmail.com')
       @instance.save
     end
@@ -61,7 +60,7 @@ module OptOut
 
   class ListTest < Test::Unit::TestCase
     def setup
-      STORE.clear
+      OptOut.config.adapter.reset
       @list = List['security']
     end
 

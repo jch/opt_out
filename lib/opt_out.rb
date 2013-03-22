@@ -79,6 +79,10 @@ module OptOut
       def destroy(id)
         raise NotImplementedError.new
       end
+
+      # Optional implementation for resetting state for testing
+      def reset
+      end
     end
 
     require 'set'
@@ -97,6 +101,10 @@ module OptOut
 
       def save(id, attributes)
         @store[id.to_s] = attributes
+      end
+
+      def reset
+        @store.clear
       end
 
       def to_s
