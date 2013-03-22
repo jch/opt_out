@@ -94,6 +94,11 @@ module OptOut
       def save(id, attributes)
         @store[id.to_s] = attributes
       end
+
+      def to_s
+        "#<OptOut::Persistence::MemoryAdapter:0x007ff10ab04c50 @store=#{@store.inspect}>"
+      end
+      alias_method :inspect, :to_s
     end
   end
 
