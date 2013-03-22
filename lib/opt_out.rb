@@ -13,8 +13,12 @@ module OptOut
   module_function :config, :configure
 
   class Configuration < Struct.new(:persistence)
-    def persistence
-      self[:persistence][:adapter].new(self[:persistence][:options] || {})
+    def adapter
+      @adapter ||= if persistence && persistence[:adapter]
+        self[:persistence][:adapter].new(self[:persistence][:options] || {})
+      else
+        raise ArgumentError.new("OptOut is missing `persistence` configuration")
+      end
     end
   end
 
@@ -34,7 +38,7 @@ module OptOut
       end
 
       def adapter
-        @adapter ||= OptOut.config.persistence
+        @adapter ||= OptOut.config.adapter
       end
     end
 

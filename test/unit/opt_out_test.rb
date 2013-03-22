@@ -13,6 +13,25 @@ OptOut.configure do |c|
 end
 
 module OptOut
+  class OptOutTest < Test::Unit::TestCase
+    def test_configuration_requires_persistence
+      original = OptOut.config.persistence
+
+      begin
+        OptOut.config.persistence = nil
+        Struct.new('Model') { include OptOut::Persistence }
+      rescue => e
+        assert false, "expected argument error, got #{e.class}: #{e.message}" unless e.is_a?(ArgumentError)
+      ensure
+        OptOut.config.persistence = original
+      end
+    end
+
+    def test_adapter
+      assert OptOut.config.adapter.is_a?(OptOut::Persistence::MemoryAdapter)
+    end
+  end
+
   class PersistenceTest < Test::Unit::TestCase
     Model = Struct.new(:id, :email) do
       include OptOut::Persistence
