@@ -67,6 +67,11 @@ module OptOut
     # A persistence adapter is responsible for persisting instances and
     # retrieving them by id.
     class AbstractAdapter
+      # Adapters are initialized with a Hash of options defined by
+      # OptOut::Configuration#persistence
+      def initialize(options = {})
+      end
+
       # Find an instance by id
       def find(id)
         raise NotImplementedError.new
