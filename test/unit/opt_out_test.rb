@@ -31,7 +31,7 @@ module OptOut
     end
   end
 
-  class PersistenceTest < Test::Unit::TestCase
+  module PersistenceTests
     Model = Struct.new(:id, :email) do
       include OptOut::Persistence
 
@@ -56,6 +56,10 @@ module OptOut
       @instance.destroy
       assert_nil Model.find(@instance.id)
     end
+  end
+
+  class MemoryAdapterTest < Test::Unit::TestCase
+    include PersistenceTests
   end
 
   class ListTest < Test::Unit::TestCase
