@@ -117,6 +117,46 @@ module OptOut
       end
       alias_method :inspect, :to_s
     end
+
+    require 'uri'
+    require 'json'  # can use HMSET, but lazy first implementation to make it more readable
+    require 'redis'
+    class RedisAdapter < AbstractAdapter
+      def initialize(options = {})
+        @options = options
+      end
+
+      # Find an instance by id
+      def find(id)
+        json = redis.get(id)
+        json && JSON.parse(json)
+      end
+
+      def save(id, attributes)
+        redis.set(id, attributes.to_json)
+      end
+
+      def destroy(id)
+        redis.del(id)
+      end
+
+      def reset
+        redis.flushdb
+      end
+
+      private
+
+      def redis
+        return @redis if @redis
+
+        @redis = if @options[:url]
+          uri = URI.parse(@options[:url])
+          Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
+        else
+          Redis.new(:host => @options[:host], :port => @options[:port], :password => @options[:password])
+        end
+      end
+    end
   end
 
   class Unsubscription

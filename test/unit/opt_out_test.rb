@@ -84,6 +84,12 @@ module OptOut
     test_adapter OptOut::Persistence::MemoryAdapter
   end
 
+  class RedisAdapterTest < Test::Unit::TestCase
+    include PersistenceTests
+
+    test_adapter OptOut::Persistence::RedisAdapter, :url => ENV['BOXEN_REDIS_URL']
+  end
+
   class ListTest < Test::Unit::TestCase
     def setup
       OptOut.config.adapter.reset
