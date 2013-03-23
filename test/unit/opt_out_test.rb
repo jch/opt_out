@@ -31,6 +31,22 @@ module OptOut
   end
 
   module PersistenceTests
+    def self.included(base)
+      base.extend Macros
+    end
+
+    module Macros
+      attr_accessor :original_persistence_settings, :persistence_settings
+
+      def test_adapter(adapter, options = {})
+        self.original_persistence_settings = OptOut.config.persistence
+        self.persistence_settings = {
+          :adapter => adapter,
+          :options => options
+        }
+      end
+    end
+
     Model = Struct.new(:id, :email) do
       include OptOut::Persistence
 
@@ -40,9 +56,14 @@ module OptOut
     end
 
     def setup
+      OptOut.config.persistence = self.class.persistence_settings
       OptOut.config.adapter.reset
       @instance = Model.new(:id => 'model_1', :email => 'jollyjerry@gmail.com')
       @instance.save
+    end
+
+    def teardown
+      OptOut.config.persistence = self.class.original_persistence_settings
     end
 
     def test_save_and_find
@@ -59,6 +80,8 @@ module OptOut
 
   class MemoryAdapterTest < Test::Unit::TestCase
     include PersistenceTests
+
+    test_adapter OptOut::Persistence::MemoryAdapter
   end
 
   class ListTest < Test::Unit::TestCase
