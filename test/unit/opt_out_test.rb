@@ -2,32 +2,31 @@
 require 'opt_out'
 
 STORE = {}  # shared memory store for persistence. Cleared between tests
-OptOut.configure do |c|
-  c.persistence = {
-    :adapter => OptOut::Persistence::MemoryAdapter,
-    :options => {
-      :store => STORE
-    }
+MEMORY_PERSISTENCE = {
+  :adapter => OptOut::Persistence::MemoryAdapter,
+  :options => {
+    :store => STORE
   }
+}
+OptOut.configure do |c|
+  c.persistence = MEMORY_PERSISTENCE
 end
 
 module OptOut
   class OptOutTest < Test::Unit::TestCase
     def test_configuration_requires_persistence
-      original = OptOut.config.persistence
-
       begin
         OptOut.config.persistence = nil
         Struct.new('Model') { include OptOut::Persistence }
       rescue => e
         assert false, "expected argument error, got #{e.class}: #{e.message}" unless e.is_a?(ArgumentError)
       ensure
-        OptOut.config.persistence = original
+        OptOut.config.persistence = MEMORY_PERSISTENCE
       end
     end
 
     def test_adapter
-      assert OptOut.config.adapter.is_a?(OptOut::Persistence::MemoryAdapter)
+      assert OptOut.config.adapter.is_a?(OptOut::Persistence::MemoryAdapter), "expected MemoryAdapter, but got #{OptOut.config.adapter.class}"
     end
   end
 
