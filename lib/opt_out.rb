@@ -1,240 +1,58 @@
-require 'active_support/core_ext/hash/keys'
+# Track user unsubscriptions by list.
+#
+# OptOut.unsubscribe('newsletters', '5')  # unsubscribe user id '5' from 'newsletters'
+# OptOut.subscribed?('newsletters', '5')
+# => false
+#
+# OptOut.subscribe('newsletters', '5')  # re-subscribe a user to 'newsletters'
+# OptOut.subscribed?('newsletters', '5')
+# => true
+#
+# OptOut.unsubscribed?('newsletters', '5')  # another way to query
+# => false
+#
+# OptOut.subscribed('newsletters', '8')  # users are subscribed by default unless explicitly unsubscribed
+# => true
+#
+# ['1', '2', '3'].each {|user_id| OptOut.unsubscribe('newsletters', user_id)}
+# OptOut.unsubscribers  # returns a list of unsubscribed user ids
+# => ['1', '2', '3']
+require 'forwardable'
+require 'opt_out/adapters'
 
-# Manage user email subscriptions and opt-outs.
 module OptOut
-  def config
-    @config ||= Configuration.new
+  # Options:
+  #   :adapter - subclass of OptOut::Adapters::AbstractAdapter
+  #   :options - instantiation options to pass to `adapter`
+  class Configuration < Struct.new(:adapter, :options)
   end
 
-  def configure(&blk)
-    blk.call(config) if blk
-    config
-  end
-  module_function :config, :configure
+  class << self
+    extend Forwardable
+    delegate [:subscribe, :subscribed?, :unsubscribe, :unsubscribed?, :unsubscribers, :reset] => :adapter
 
-  class Configuration < Struct.new(:persistence)
+    # Private: returns a memoized instance of adapter to use
     def adapter
-      @adapter ||= if persistence && persistence[:adapter]
-        self[:persistence][:adapter].new(self[:persistence][:options] || {})
-      else
-        raise ArgumentError.new("OptOut is missing `persistence` configuration")
-      end
-    end
-  end
-
-  # Required methods for including this class:
-  #   #id
-  #   #serializable_hash
-  module Persistence
-    def self.included(base)
-      base.extend ClassMethods
+      @adapter ||= config.adapter.new(config.options)
     end
 
-    module ClassMethods
-      def find(id)
-        if attributes = adapter.find(id)
-          new(attributes)
-        end
-      end
-
-      def adapter
-        @adapter ||= OptOut.config.adapter
-      end
-    end
-
-    # String identifier for this instance
-    def id
-      raise NotImplementedError.new
-    end
-
-    # Persist this instance. Returns boolean indicating success.
-    def save
-      self.class.adapter.save(id, serializable_hash)
-    end
-
-    # Destroy this instance. Returns boolean indicating success.
-    def destroy
-      self.class.adapter.destroy(id)
-    end
-
-    # Return a Hash of attributes to save
-    def serializable_hash
-      raise NotImplementedError.new
-    end
-  end
-
-  module Persistence
-    # A persistence adapter is responsible for persisting instances and
-    # retrieving them by id.
-    class AbstractAdapter
-      # Adapters are initialized with a Hash of options defined by
-      # OptOut::Configuration#persistence
-      def initialize(options = {})
-      end
-
-      # Find an instance by id
-      def find(id)
-        raise NotImplementedError.new
-      end
-
-      def save(id, attributes)
-        raise NotImplementedError.new
-      end
-
-      def destroy(id)
-        raise NotImplementedError.new
-      end
-
-      # Optional implementation for resetting state for testing
-      def reset
-      end
-    end
-
-    require 'set'
-    class MemoryAdapter < AbstractAdapter
-      def initialize(options = {})
-        @store = options[:store] || Hash.new
-      end
-
-      def find(id)
-        @store[id.to_s]
-      end
-
-      def destroy(id)
-        @store.delete(id.to_s)
-      end
-
-      def save(id, attributes)
-        @store[id.to_s] = attributes
-      end
-
-      def reset
-        @store.clear
-      end
-
-      def to_s
-        "#<OptOut::Persistence::MemoryAdapter:0x007ff10ab04c50 @store=#{@store.inspect}>"
-      end
-      alias_method :inspect, :to_s
-    end
-
-    require 'uri'
-    require 'json'  # can use HMSET, but lazy first implementation to make it more readable
-    require 'redis'
-    class RedisAdapter < AbstractAdapter
-      def initialize(options = {})
-        @options = options
-      end
-
-      # Find an instance by id
-      def find(id)
-        json = redis.get(id)
-        json && JSON.parse(json)
-      end
-
-      def save(id, attributes)
-        redis.set(id, attributes.to_json)
-      end
-
-      def destroy(id)
-        redis.del(id)
-      end
-
-      def reset
-        redis.flushdb
-      end
-
-      private
-
-      def redis
-        return @redis if @redis
-
-        @redis = if @options[:url]
-          uri = URI.parse(@options[:url])
-          Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
-        else
-          Redis.new(:host => @options[:host], :port => @options[:port], :password => @options[:password])
-        end
-      end
-    end
-  end
-
-  class Unsubscription
-    include OptOut::Persistence
-
-    def initialize(attributes)
-      @attributes = attributes.symbolize_keys
-    end
-
-    def id
-      "#{list_id}|#{user_id}"
-    end
-
-    def user_id
-      @attributes[:user_id]
-    end
-
-    def list_id
-      @attributes[:list_id]
-    end
-
-    def serializable_hash
-      {:user_id => user_id, :list_id => list_id}
-    end
-  end
-
-  class List
-    include OptOut::Persistence
-
-    # Public: lookup a list by name
+    # Public: Configure OptOut. Returns Configuration.
     #
-    # Returns a List instance
-    def self.[](name)
-      new(:name => name)
+    # Example:
+    #
+    #    OptOut.configure do |c|
+    #      c.adapter = OptOut::Adapters::RedisAdapter
+    #      c.options = {:host => 'localhost', :port => '6379', :password => ''}
+    #    end
+    def configure(&blk)
+      blk.call(config)
+      @adapter = nil  # invalidate adapter on reconfiguration
+      config
     end
 
-    attr_accessor :name
-
-    def initialize(attributes)
-      attributes.symbolize_keys!
-      @name = attributes[:name]
-    end
-
-    # Identifier to use for persistence
-    def id
-      name
-    end
-
-    def serializable_hash
-      {:name => name}
-    end
-
-    # Public: Subscribe a user to this list. Persists this list. Returns
-    # nothing.
-    def subscribe(user_id)
-      if unsubscription = find_unsubscription(user_id)
-        unsubscription.destroy
-      end
-      save
-      nil
-    end
-
-    def unsubscribe(user_id)
-      unless unsubscription = find_unsubscription(user_id)
-        Unsubscription.new(:user_id => user_id, :list_id => id).save
-      end
-      save
-      nil
-    end
-
-    def subscribed?(user_id)
-      !find_unsubscription(user_id)
-    end
-
-    private
-
-    def find_unsubscription(user_id)
-      Unsubscription.find("#{self.id}|#{user_id}")
+    # Public: Returns Configuration
+    def config
+      @config ||= Configuration.new
     end
   end
 end
