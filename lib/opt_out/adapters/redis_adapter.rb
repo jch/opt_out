@@ -10,6 +10,8 @@ module OptOut
     #   :host
     #   :port
     #   :password
+    #   :key_format - format string for redis key. list_id is interpolated into this option.
+    #                 Default is "opt_out:%s"
     class RedisAdapter < AbstractAdapter
       def subscribe(list_id, user_id)
         redis.srem(key(list_id), user_id) and return
@@ -31,8 +33,12 @@ module OptOut
         redis.flushdb
       end
 
-      private
+      def key_format
+        @key_format || @options[:key_format] || "opt_out:%s"
+      end
+      attr_writer :key_format
 
+      # Private: returns redis client for this adapter
       def redis
         return @redis if @redis
 
@@ -44,9 +50,11 @@ module OptOut
         end
       end
 
-      # Prefixes set with `opt_out:`
+      private
+
+      # Returns key to use for redis set add from `:key_format` option
       def key(list_id)
-        "opt_out:#{list_id}"
+        key_format % list_id
       end
     end
   end
