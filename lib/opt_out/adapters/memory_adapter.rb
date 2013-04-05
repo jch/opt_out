@@ -19,7 +19,7 @@ module OptOut
       end
 
       def unsubscribed?(list_id, user_id)
-        store[list_id].include?(user_id)
+        (store[list_id] || []).include?(user_id)
       end
 
       def unsubscribers(list_id)
