@@ -31,6 +31,10 @@ module AdapterTests
     OptOut.reset
   end
 
+  def test_auto_subscribed
+    assert OptOut.subscribed?('newsletters', '5')
+  end
+
   def test_resubscribe
     OptOut.unsubscribe('newsletters', '5')
     OptOut.subscribe('newsletters', '5')
@@ -39,6 +43,13 @@ module AdapterTests
   end
 
   def test_unsubscribe
+    OptOut.unsubscribe('newsletters', '5')
+    assert !OptOut.subscribed?('newsletters', '5')
+    assert OptOut.unsubscribed?('newsletters', '5')
+  end
+
+  def test_multi_unsubscribe
+    OptOut.unsubscribe('newsletters', '5')
     OptOut.unsubscribe('newsletters', '5')
     assert !OptOut.subscribed?('newsletters', '5')
     assert OptOut.unsubscribed?('newsletters', '5')
