@@ -82,3 +82,8 @@ class OptOut::RedisAdapterTest < Test::Unit::TestCase
     assert_equal ['9'], OptOut.adapter.redis.smembers("notifications:releases:subscribe")
   end
 end
+
+class OptOut::ActiveRecordAdapterTest < Test::Unit::TestCase
+  include AdapterTests
+  test_adapter OptOut::Adapters::ActiveRecordAdapter, :table_name => 'opt_outs'
+end
