@@ -3,8 +3,8 @@ module OptOut
     # An adapter is responsible for tracking (un/re)subscriptions, and
     # unsubscribers.
     class AbstractAdapter
-      def initialize(options = {})
-        @options = options
+      def initialize(options = nil)
+        @options = options || {}
       end
 
       # Public: `user_id` is subscribed? to `list_id` iff it's unsubscribed.
