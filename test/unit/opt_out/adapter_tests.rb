@@ -27,7 +27,7 @@ module AdapterTests
 
   def teardown
     OptOut.config.adapter = self.class.original_config[:adapter]
-    OptOut.config.options = self.class.original_config[:options]    
+    OptOut.config.options = self.class.original_config[:options]
     OptOut.reset
   end
 
