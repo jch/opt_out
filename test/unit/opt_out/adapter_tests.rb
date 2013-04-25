@@ -1,3 +1,4 @@
+require 'test_helper'
 require 'opt_out'
 
 module AdapterTests
