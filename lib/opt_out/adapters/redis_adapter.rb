@@ -6,6 +6,7 @@ module OptOut
     # Adapter that persists data in a Redis set.
     #
     # Options
+    #   :redis - redis connection object OR
     #   :url   - redis connection url OR
     #   :host
     #   :port
@@ -42,7 +43,9 @@ module OptOut
       def redis
         return @redis if @redis
 
-        @redis = if @options[:url]
+        @redis = if @options[:redis]
+          @options[:redis]
+        elsif @options[:url]
           uri = URI.parse(@options[:url])
           Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
         else

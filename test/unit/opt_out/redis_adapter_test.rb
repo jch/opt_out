@@ -2,7 +2,7 @@ require 'unit/opt_out/adapter_tests'
 
 class OptOut::RedisAdapterTest < Test::Unit::TestCase
   include AdapterTests
-  test_adapter OptOut::Adapters::RedisAdapter, :url => ENV['BOXEN_REDIS_URL']
+  test_adapter OptOut::Adapters::RedisAdapter, :redis => GitHub.redis
 
   def test_default_key_format
     OptOut.unsubscribe('releases', '9')
