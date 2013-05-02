@@ -15,14 +15,14 @@ module OptOut
 
       def subscribe(list_id, user_id)
         return if [list_id, user_id].any? {|s| s.nil? || s == ''}
-        store.where(:list_id => list_id, :user_id => user_id).delete_all
+        store.where(:list_id => list_id.to_s, :user_id => user_id.to_s).delete_all
         nil
       end
 
       # TODO: would prefer opt_outs table to not have a primary key `id`, but
       # that's not working right now
       def unsubscribe(list_id, user_id)
-        store.create(:list_id => list_id, :user_id => user_id)
+        store.create(:list_id => list_id.to_s, :user_id => user_id.to_s)
       rescue ActiveRecord::RecordNotUnique
         # already unsubscribed
       ensure
@@ -30,11 +30,11 @@ module OptOut
       end
 
       def unsubscribed?(list_id, user_id)
-        store.exists?(:list_id => list_id, :user_id => user_id)
+        store.exists?(:list_id => list_id.to_s, :user_id => user_id.to_s)
       end
 
       def unsubscribers(list_id)
-        store.where(:list_id => list_id).map(&:user_id).to_a
+        store.where(:list_id => list_id.to_s).map(&:user_id).to_a
       end
 
       def reset
