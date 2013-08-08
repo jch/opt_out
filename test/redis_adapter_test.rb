@@ -1,4 +1,4 @@
-require 'unit/opt_out/adapter_tests'
+require 'adapter_tests'
 
 class OptOut::RedisAdapterTest < Test::Unit::TestCase
   include AdapterTests
