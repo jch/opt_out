@@ -1,5 +1,5 @@
-require 'test_helper'
 require 'opt_out'
+require 'test/unit'
 
 module AdapterTests
   def self.included(base)
