@@ -1,5 +1,8 @@
 require 'opt_out'
 require 'test/unit'
+require 'dotenv'
+
+Dotenv.load
 
 module AdapterTests
   def self.included(base)
