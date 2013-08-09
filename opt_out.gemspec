@@ -15,5 +15,5 @@ Gem::Specification.new do |gem|
   gem.test_files    = gem.files.grep(%r{^test})
   gem.require_paths = ["lib"]
 
-  gem.add_development_dependency "redis", "~> 3.0"
+  gem.add_development_dependency "redis"
 end
