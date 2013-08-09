@@ -45,3 +45,19 @@ end
 
 See individual adapter classes for setup and configuration options. To write a
 custom adapter, take a look at [AbstractAdapter](lib/opt_out/adapters/abstract_adapter.rb)
+
+
+## Development
+
+To run tests, you will need a running redis instance. Add a `.env` file to the
+project root to configure where redis lives:
+
+```
+REDIS_URL=redis://localhost:6379
+```
+
+To run tests:
+
+```sh
+$ rake
+```
