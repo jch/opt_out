@@ -4,6 +4,14 @@ require 'dotenv'
 
 Dotenv.load
 
+# All adapters must pass these tests. To setup a new adapter test:
+#
+# class MyAdapterTest < Test::Unit::TestCase
+#   include AdapterTests
+#   test_adapter(MyAdapter, {:some => 'options'}) do
+#     # optional test setup block
+#   end
+# end
 module AdapterTests
   def self.included(base)
     base.extend Macros
@@ -12,16 +20,20 @@ module AdapterTests
   module Macros
     attr_accessor :original_config, :test_config
 
-    def test_adapter(adapter, options = {})
+    def test_adapter(adapter, options = {}, &blk)
       self.original_config = OptOut.config.dup
       self.test_config = {
         :adapter => adapter,
-        :options => options
+        :options => options,
+        :setup   => blk
       }
     end
   end
 
   def setup
+    if custom_setup = self.class.test_config[:setup]
+      custom_setup.call
+    end
     OptOut.configure do |c|
       c.adapter = self.class.test_config[:adapter]
       c.options = self.class.test_config[:options]
