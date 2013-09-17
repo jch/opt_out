@@ -51,6 +51,11 @@ module AdapterTests
     assert OptOut.subscribed?('newsletters', '5')
   end
 
+  def test_subscribe_when_already_subscribed
+    OptOut.subscribe('newsletters', '5')
+    assert OptOut.subscribed?('newsletters', '5')
+  end
+
   def test_resubscribe
     OptOut.unsubscribe('newsletters', '5')
     OptOut.subscribe('newsletters', '5')
