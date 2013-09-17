@@ -9,7 +9,7 @@ module OptOut
     class MemoryAdapter < AbstractAdapter
       # Subscribe `user_id` to `list_id`. Returns nothing.
       def subscribe(list_id, user_id)
-        store[list_id].delete(user_id) and return
+        store.fetch(list_id, {}).delete(user_id) and return
       end
 
       def unsubscribe(list_id, user_id)
